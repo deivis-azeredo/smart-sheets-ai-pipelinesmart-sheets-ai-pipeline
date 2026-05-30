@@ -1,12 +1,12 @@
-import gspread
-from google.oauth2.service_account import Credentials
+import openpyxl
 from groq import Groq
 import time
+import os
 
 # ========================
 # CONFIGURATIONS
 # ========================
-GROQ_API_KEY = "YOUR_API_KEY_HERE"
+GROQ_API_KEY = ""
 SPREADSHEET_FILE = "reports.xlsx"
 SHEET_NAME = "reports"
 START_ROW = 2
@@ -14,20 +14,19 @@ END_ROW = 10
 TARGET_COLUMN = "B"
 
 # ========================
-# CONNECT GOOGLE SHEETS
+# CONNECT TO LOCAL SPREADSHEET
 # ========================
-print("🔌 Connecting to Google Sheets...")
-scopes = [
-    "https://www.googleapis.com/auth/spreadsheets",
-    "https://www.googleapis.com/auth/drive"
-]
-# Assuming credentials.json is in the same folder
-creds = Credentials.from_service_account_file("credentials.json", scopes=scopes)
-gc = gspread.authorize(creds)
+print(f"🔌 Opening local spreadsheet: {SPREADSHEET_FILE}...")
 
-# Using the standard variables we defined earlier
-sheet = gc.open_by_key(SPREADSHEET_FILE).worksheet(SHEET_NAME)
-print("✅ Connected!")
+if not os.path.exists(SPREADSHEET_FILE):
+    print(f"❌ Error: The file '{SPREADSHEET_FILE}' was not found in this folder.")
+    print("Please make sure the Excel file is in the same directory as this script.")
+    exit()
+
+# Load the workbook and select the worksheet
+workbook = openpyxl.load_workbook(SPREADSHEET_FILE)
+sheet = workbook[SHEET_NAME]
+print("✅ Loaded successfully!")
 
 # ========================
 # Data Processing Loop
@@ -38,10 +37,10 @@ total_updated = 0
 
 for current_row in range(START_ROW, END_ROW + 1):
     cell_address = f"{TARGET_COLUMN}{current_row}"
-    cell_value = sheet.acell(cell_address).value
+    cell_value = sheet[cell_address].value
     print(f"  Cell {cell_address}: '{cell_value}'")
 
-    if not cell_value or cell_value.strip() == "":
+    if not cell_value or str(cell_value).strip() == "":
         print(f"  ⏭️  Empty, skipping...")
         continue
 
@@ -62,17 +61,21 @@ for current_row in range(START_ROW, END_ROW + 1):
                 },
                 {
                     "role": "user",
-                    "content": cell_value
+                    "content": str(cell_value)
                 }
             ]
         )
         corrected_text = response.choices[0].message.content.strip()
-        sheet.update_acell(cell_address, corrected_text)
-        print(f"  ✅ Saved!")
+        
+        # Update the cell in memory
+        sheet[cell_address] = corrected_text
+        print(f"  ✅ Corrected!")
         total_updated += 1
         time.sleep(3) # Pausing to respect API rate limits
         
     except Exception as e:
         print(f"  ❌ Error: {e}")
 
-print(f"\n🎉 Done! {total_updated} cells updated successfully.")
+# Save the changes back to the local file
+workbook.save(SPREADSHEET_FILE)
+print(f"\n🎉 Done! {total_updated} cells updated and saved to '{SPREADSHEET_FILE}' successfully.")
