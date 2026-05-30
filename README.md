@@ -2,7 +2,7 @@
 
 > An automated, Python-driven solution for spreadsheet text validation and correction, built through advanced AI-Assisted Coding.
 
-![Project Demo](COLE_AQUI_O_LINK_DO_SEU_GIF)
+![Project Demo](automation_shhetsgif.gif)
 
 ## 🎯 The Problem
 Manual review of large spreadsheets is time-consuming, repetitive, and prone to human error. Businesses need a way to process, validate, and correct text data instantly without relying on massive manual labor.
