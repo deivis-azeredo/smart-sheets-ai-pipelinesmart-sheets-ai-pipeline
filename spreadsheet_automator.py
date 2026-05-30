@@ -4,47 +4,50 @@ from groq import Groq
 import time
 
 # ========================
-# CONFIGURAÇÕES
+# CONFIGURATIONS
 # ========================
-GROQ_API_KEY = " ■■■■■■■■■■■Due to restrictions my API won't be shown"
-SPREADSHEET_ID = "reports.xlsx"
+GROQ_API_KEY = "YOUR_API_KEY_HERE"
+SPREADSHEET_FILE = "reports.xlsx"
 SHEET_NAME = "reports"
-LINHA_INICIO = 2
-LINHA_FIM = 10
-COLUNA = "B"
+START_ROW = 2
+END_ROW = 10
+TARGET_COLUMN = "B"
 
 # ========================
-# CONECTAR GOOGLE SHEETS
+# CONNECT GOOGLE SHEETS
 # ========================
-print("🔌 Conectando ao Google Sheets...")
+print("🔌 Connecting to Google Sheets...")
 scopes = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive"
 ]
+# Assuming credentials.json is in the same folder
 creds = Credentials.from_service_account_file("credentials.json", scopes=scopes)
 gc = gspread.authorize(creds)
-sheet = gc.open_by_key(SPREADSHEET_ID).worksheet(SHEET_NAME)
-print("✅ Conectado!")
+
+# Using the standard variables we defined earlier
+sheet = gc.open_by_key(SPREADSHEET_FILE).worksheet(SHEET_NAME)
+print("✅ Connected!")
 
 # ========================
-# LER TODAS AS CÉLULAS
+# Data Processing Loop
 # ========================
-print(f"\n📖 Lendo coluna {COLUNA} linhas {LINHA_INICIO} até {LINHA_FIM}...")
-client_groq = Groq(api_key=GROQ_API_KEY)
-total = 0
+print(f"\n📖 Reading column {TARGET_COLUMN} from row {START_ROW} to {END_ROW}...")
+groq_client = Groq(api_key=GROQ_API_KEY)
+total_updated = 0
 
-for linha in range(LINHA_INICIO, LINHA_FIM + 1):
-    celula = f"{COLUNA}{linha}"
-    valor = sheet.acell(celula).value
-    print(f"  Célula {celula}: '{valor}'")
+for current_row in range(START_ROW, END_ROW + 1):
+    cell_address = f"{TARGET_COLUMN}{current_row}"
+    cell_value = sheet.acell(cell_address).value
+    print(f"  Cell {cell_address}: '{cell_value}'")
 
-    if not valor or valor.strip() == "":
-        print(f"  ⏭️  Vazia, pulando...")
+    if not cell_value or cell_value.strip() == "":
+        print(f"  ⏭️  Empty, skipping...")
         continue
 
-    print(f"  ✏️  Enviando para o Groq...")
+    print(f"  ✏️  Sending to Groq API...")
     try:
-        response = client_groq.chat.completions.create(
+        response = groq_client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=[
                 {
@@ -59,16 +62,17 @@ for linha in range(LINHA_INICIO, LINHA_FIM + 1):
                 },
                 {
                     "role": "user",
-                    "content": valor
+                    "content": cell_value
                 }
             ]
         )
-        texto_corrigido = response.choices[0].message.content.strip()
-        sheet.update_acell(celula, texto_corrigido)
-        print(f"  ✅ Gravado!")
-        total += 1
-        time.sleep(3)
+        corrected_text = response.choices[0].message.content.strip()
+        sheet.update_acell(cell_address, corrected_text)
+        print(f"  ✅ Saved!")
+        total_updated += 1
+        time.sleep(3) # Pausing to respect API rate limits
+        
     except Exception as e:
-        print(f"  ❌ Erro: {e}")
+        print(f"  ❌ Error: {e}")
 
-print(f"\n🎉 Concluído! {total} células atualizadas.")
+print(f"\n🎉 Done! {total_updated} cells updated successfully.")
