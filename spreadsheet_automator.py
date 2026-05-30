@@ -7,7 +7,7 @@ import time
 # CONFIGURAÇÕES
 # ========================
 GROQ_API_KEY = " ■■■■■■■■■■■Due to restrictions my API won't be shown"
-SPREADSHEET_ID = "1IcazM6QTlPsU8fRorbeGBQwt8bPige9MWxIoeKYRe7o"
+SPREADSHEET_ID = "reports.xlsx"
 SHEET_NAME = "reports"
 LINHA_INICIO = 2
 LINHA_FIM = 10
