@@ -1,1 +1,19 @@
+# Ambientes Virtuais
+venv/
+env/
+.env
+.venv
 
+# Ficheiros de Cache do Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Ficheiros temporários do Word/Excel (Muito importante para os nossos projetos!)
+~$*.doc
+~$*.docx
+~$*.xls
+~$*.xlsx
+
+# Outros
+.DS_Store
